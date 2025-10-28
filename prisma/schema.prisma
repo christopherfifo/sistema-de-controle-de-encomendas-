@@ -1,6 +1,6 @@
 // Configuração do Banco de Dados
 datasource db {
-  provider = "postgresql" // Definido o PostgreSQL como SGBD [cite: 116]
+  provider = "postgresql" // Definido o PostgreSQL como SGBD [cite: 123]
   url      = env("DATABASE_URL") // URL de conexão (deve ser definida no arquivo .env)
 }
 
@@ -40,9 +40,13 @@ enum TipoRecado {
 
 // 1. Condominios (Clientes do SaaS)
 model Condominio {
-  id_condominio     String @id @default(uuid()) // Chave primária UUID
-  nome_condominio   String
-  cnpj              String @unique // CNPJ deve ser único
+  id_condominio   String @id @default(uuid()) // Chave primária UUID
+  nome_condominio String
+  cnpj            String @unique // CNPJ deve ser único
+
+  // CAMPO NOVO: Código amigável para o morador se cadastrar
+  codigo_acesso String @unique @default(cuid())
+
   logradouro        String
   numero            String
   bairro            String
@@ -57,7 +61,7 @@ model Condominio {
 
   data_adesao       DateTime @default(now())
   ativo             Boolean  @default(true)
-  identidade_visual Json? // Para cores, logo, etc.
+  identidade_visual Json? // Para cores, logo, etc. [cite: 53, 89]
 
   // Relações com outras tabelas
   usuarios Usuario[]
@@ -68,18 +72,23 @@ model Condominio {
 
 // 2. Planos (Catálogo de Assinaturas)
 model Plano {
-  id_plano        String   @id @default(uuid())
-  nome_plano      String   @unique
-  valor           Decimal  @db.Decimal(10, 2)
+  id_plano        String  @id @default(uuid())
+  nome_plano      String  @unique
+  valor           Decimal @db.Decimal(10, 2)
   limite_unidades Int
-  data_inclusao   DateTime @default(now())
+
+  // CAMPOS NOVOS: Limites do plano conforme solicitado
+  limite_usuarios    Int // "quantidade maxima de moradores" (usuários)
+  limite_condominios Int // "quantidade maxima de condominios"
+
+  data_inclusao DateTime @default(now())
 
   // Relações
   condominios Condominio[]
   faturas     Fatura[]
 }
 
-// 3. Usuarios (Todos que acessam: Moradores, Porteiros, Síndicos, Admins)
+// 3. Usuarios (Todos que acessam: Moradores, Porteiros, Síndicos, Admins) [cite: 82]
 model Usuario {
   id_usuario    String        @id @default(uuid())
   nome_completo String
@@ -112,8 +121,8 @@ model Unidade {
   id_condominio String
   condominio    Condominio @relation(fields: [id_condominio], references: [id_condominio])
 
-  bloco_torre    String
-  numero_unidade String
+  bloco_torre    String // Este é o "código da torre" que o morador informará
+  numero_unidade String // Este é o número do apartamento/casa
 
   // Relações
   moradores  MoradoresUnidades[]
@@ -138,7 +147,7 @@ model MoradoresUnidades {
   @@unique([id_usuario, id_unidade])
 }
 
-// 6. Encomendas (O core do sistema)
+// 6. Encomendas (O core do sistema) [cite: 20]
 model Encomenda {
   id_encomenda String @id @default(uuid())
 
@@ -157,14 +166,14 @@ model Encomenda {
   condicao         String
   data_recebimento DateTime @default(now())
   status           String // Ex: AGUARDANDO_RETIRADA, RETIRADA, RECUSADA
-  url_foto_pacote  String
+  url_foto_pacote  String // [cite: 59, 83]
 
   // Relações
   retirada     Retirada? // 1:1, uma encomenda pode ter no máximo uma retirada
   notificacoes Notificacao[]
 }
 
-// 7. Retiradas (Comprovante de Saída)
+// 7. Retiradas (Comprovante de Saída) [cite: 86]
 model Retirada {
   id_retirada String @id @default(uuid())
 
@@ -176,8 +185,8 @@ model Retirada {
   usuario_retirada    Usuario @relation(fields: [id_usuario_retirada], references: [id_usuario])
 
   data_retirada     DateTime @default(now())
-  forma_confirmacao String
-  comprovante       String? // Assinatura digital ou código
+  forma_confirmacao String // [cite: 86]
+  comprovante       String? // Assinatura digital ou código [cite: 86]
 }
 
 // 8. Faturas (Gestão Financeira e Inadimplência)
@@ -200,7 +209,7 @@ model Fatura {
   link_pagamento   String?
 }
 
-// 9. Recados_Feedback (Comunicação)
+// 9. Recados_Feedback (Comunicação) [cite: 88]
 model Recado {
   id_recado String @id @default(uuid())
 
@@ -234,7 +243,7 @@ model RespostaRecado {
   conteudo_resposta String   @db.Text
 }
 
-// 11. Notificacoes (Controle de Mensagens)
+// 11. Notificacoes (Controle de Mensagens) [cite: 85]
 model Notificacao {
   id_notificacao String @id @default(uuid())
 
@@ -244,7 +253,7 @@ model Notificacao {
   id_usuario_destinatario String
   usuario_destinatario    Usuario   @relation(fields: [id_usuario_destinatario], references: [id_usuario])
 
-  tipo_envio   String // Ex: PUSH_APP, WHATSAPP
+  tipo_envio   String // Ex: PUSH_APP, WHATSAPP [cite: 60, 85]
   mensagem     String   @db.Text
   data_envio   DateTime @default(now())
   status_envio String // Ex: ENVIADA, LIDA, ERRO
