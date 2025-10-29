@@ -8,10 +8,10 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import Link from "next/link";
+import { LoginForm } from "./loginForm"; // <-- Importa o Client Component
 
+// Esta página continua sendo um Server Component (ótimo para SEO)
 export default function LoginPage() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-muted/40 p-4">
@@ -22,25 +22,10 @@ export default function LoginPage() {
             Acesse sua conta para gerenciar as encomendas.
           </CardDescription>
         </CardHeader>
-
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="sindico@condominio.com"
-              required
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="password">Senha</Label>
-            <Input id="password" type="password" required />
-          </div>
-
-          <Button type="submit" className="w-full">
-            Entrar
-          </Button>
+        
+        <CardContent>
+          {/* Renderiza o formulário interativo aqui */}
+          <LoginForm />
         </CardContent>
 
         <CardFooter className="flex flex-col gap-4">
